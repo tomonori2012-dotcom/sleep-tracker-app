@@ -1,6 +1,5 @@
 package com.example.backend;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -9,16 +8,33 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:5173")
 public class SleepRecordController {
 
-    @Autowired
-    private SleepRecordRepository repository;
+    private final SleepRecordService service;
 
-    @GetMapping
-    public List getAllRecords() {
-        return repository.findAll();
+    public SleepRecordController(SleepRecordService service) {
+        this.service = service;
     }
 
+    // 取得 (GET)
+    @GetMapping
+    public List getAllRecords() {
+        return service.getAllRecords();
+    }
+
+    // 登録 (POST)
     @PostMapping
     public SleepRecord createRecord(@RequestBody SleepRecord record) {
-        return repository.save(record);
+        return service.createRecord(record);
+    }
+
+    // 更新 (PUT)
+    @PutMapping("/{id}")
+    public SleepRecord updateRecord(@PathVariable Long id, @RequestBody SleepRecord record) {
+        return service.updateRecord(id, record);
+    }
+
+    // 削除 (DELETE)
+    @DeleteMapping("/{id}")
+    public void deleteRecord(@PathVariable Long id) {
+        service.deleteRecord(id);
     }
 }

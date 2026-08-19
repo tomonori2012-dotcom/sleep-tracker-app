@@ -16,7 +16,7 @@ public class SleepRecordController {
 
     // 取得 (GET)
     @GetMapping
-    public List getAllRecords() {
+    public List<SleepRecord> getAllRecords() {
         return service.getAllRecords();
     }
 

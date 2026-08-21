@@ -70,3 +70,23 @@ graph TD
     User -->|② REST API通信| Render
     Render -->|③ SQLクエリ| Neon
 ```
+
+## ローカル環境での起動方法
+
+**必要環境**
+* Node.js (v18以上)
+* Java (JDK 17以上)
+* Git
+
+**1. リポジトリのクローン**
+```bash
+git clone https://github.com/tomonori2012-dotcom/sleep-tracker-app.git
+cd sleep-tracker-app
+
+cd backend
+./mvnw spring-boot:run
+
+cd frontend
+npm install
+npm run dev
+```

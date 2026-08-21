@@ -6,6 +6,9 @@
 
 ## サービス概要
 毎日の睡眠時間や体調メモを簡単に記録・管理できるアプリケーションです。直感的な操作で過去の記録を可視化し、自身の睡眠習慣の振り返りをサポートします。
+<img width="433" height="385" alt="image" src="https://github.com/user-attachments/assets/813a82b3-ce88-46b3-80b8-1b6e2036c1cc" />
+<img width="531" height="608" alt="image" src="https://github.com/user-attachments/assets/2ac3f6e9-f052-46eb-ba47-a8d3f5c9f1e6" />
+
 
 ---
 

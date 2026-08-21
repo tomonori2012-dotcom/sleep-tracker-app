@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
+// バックエンド（Render）の公開URL
+const API_BASE_URL = 'https://sleep-tracker-backend-xfez.onrender.com';
+
 function App() {
-    // --- 1. 認証機能用のステート ---
+    // 1. 認証機能用のステート
     const [isLoggedIn, setIsLoggedIn] = useState(
         localStorage.getItem('isLoggedIn') === 'true'
     )
@@ -10,7 +13,7 @@ function App() {
     const [loginPass, setLoginPass] = useState('')
     const [loginError, setLoginError] = useState('')
 
-    // --- 2. 睡眠記録アプリ用のステート ---
+    // 2. 睡眠記録アプリ用のステート
     const [records, setRecords] = useState([])
     const [date, setDate] = useState('')
     const [hours, setHours] = useState('')
@@ -19,17 +22,25 @@ function App() {
     const [errorMessage, setErrorMessage] = useState('')
     const [sleepAlert, setSleepAlert] = useState('')
 
+    // ステータスバッジ判定用関数
+    const getStatus = (hoursNum) => {
+        const num = parseFloat(hoursNum)
+        if (num < 6) {
+            return { text: '⚠️ 睡眠不足', bg: '#FEE2E2', color: '#DC2626' }
+        } else if (num > 9) {
+            return { text: '⚠️ 寝すぎ注意', bg: '#FEF3C7', color: '#D97706' }
+        }
+        return { text: '✨ 良好', bg: '#DCFCE7', color: '#166534' }
+    }
+
     // 一覧取得 (GET)
     const fetchRecords = () => {
-        fetch('http://localhost:8080/api/sleep')
+        fetch(`${API_BASE_URL}/api/sleep`)
             .then((res) => {
                 if (!res.ok) throw new Error('取得エラー')
                 return res.json()
             })
-            .then((data) => {
-                setRecords(data)
-                setErrorMessage('')
-            })
+            .then((data) => setRecords(data))
             .catch((err) => {
                 console.error(err)
                 setErrorMessage('データの取得に失敗しました。')
@@ -59,44 +70,23 @@ function App() {
         }
     }
 
-    // ログイン処理
-    const handleLogin = (e) => {
-        e.preventDefault()
-        if (loginUser === 'admin' && loginPass === '1234') {
-            setIsLoggedIn(true)
-            localStorage.setItem('isLoggedIn', 'true')
-            setLoginError('')
-        } else {
-            setLoginError('ユーザー名またはパスワードが違います')
-        }
-    }
-
-    // ログアウト処理
-    const handleLogout = () => {
-        setIsLoggedIn(false)
-        localStorage.removeItem('isLoggedIn')
-        setLoginUser('')
-        setLoginPass('')
-    }
-
-    // フォーム入力のリセット
+    // フォームリセット
     const resetForm = () => {
         setDate('')
         setHours('')
         setMemo('')
         setEditingId(null)
-        setErrorMessage('')
         setSleepAlert('')
     }
 
-    // 保存処理（新規 POST / 更新 PUT）
+    // 保存処理 (新規 POST / 更新 PUT)
     const handleSubmit = (e) => {
         e.preventDefault()
         setErrorMessage('')
 
         const url = editingId
-            ? `http://localhost:8080/api/sleep/${editingId}`
-            : 'http://localhost:8080/api/sleep'
+            ? `${API_BASE_URL}/api/sleep/${editingId}`
+            : `${API_BASE_URL}/api/sleep`
 
         const method = editingId ? 'PUT' : 'POST'
 
@@ -116,12 +106,12 @@ function App() {
             })
     }
 
-    // 編集モードの開始
+    // 編集モードへのセット
     const handleEdit = (item) => {
         setEditingId(item.id)
         setDate(item.date)
         setHours(item.hours)
-        setMemo(item.memo)
+        setMemo(item.memo || '')
         handleHoursChange(item.hours)
         setErrorMessage('')
     }
@@ -129,7 +119,7 @@ function App() {
     // 削除処理 (DELETE)
     const handleDelete = (id) => {
         setErrorMessage('')
-        fetch(`http://localhost:8080/api/sleep/${id}`, {
+        fetch(`${API_BASE_URL}/api/sleep/${id}`, {
             method: 'DELETE',
         })
             .then((res) => {
@@ -142,145 +132,176 @@ function App() {
             })
     }
 
-    // 睡眠ステータス判定用ヘルパー関数
-    const getSleepBadge = (h) => {
-        if (h < 6) {
-            return { text: '⚠️ 睡眠不足', bg: '#FEE2E2', color: '#DC2626' }
-        } else if (h > 9) {
-            return { text: '⚠️ 不規則/寝すぎ', bg: '#FEF3C7', color: '#D97706' }
+    // ログイン処理
+    const handleLogin = (e) => {
+        e.preventDefault()
+        if (loginUser && loginPass) {
+            setIsLoggedIn(true)
+            localStorage.setItem('isLoggedIn', 'true')
+            setLoginError('')
+        } else {
+            setLoginError('ユーザー名とパスワードを入力してください。')
         }
-        return { text: '✨ 良好', bg: '#DCFCE7', color: '#16A34A' }
     }
 
-    // 未ログイン画面
-    if (!isLoggedIn) {
-        return (
-            <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                <div style={{ width: '100%', maxWidth: '380px', padding: '36px 32px', backgroundColor: '#ffffff', borderRadius: '16px', boxShadow: '0 12px 32px rgba(0, 0, 0, 0.08)', textAlign: 'center', border: '1px solid #f0f0f0' }}>
-                    <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-                        <span style={{ fontSize: '26px' }}>🌙</span>
-                    </div>
-                    <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1E293B', margin: '0 0 6px 0' }}>睡眠記録 App</h1>
-                    <p style={{ fontSize: '13px', color: '#64748B', margin: '0 0 28px 0' }}>アカウント情報を入力してログイン</p>
+    // ログアウト処理
+    const handleLogout = () => {
+        setIsLoggedIn(false)
+        localStorage.removeItem('isLoggedIn')
+    }
 
-                    {loginError && (
-                        <div style={{ padding: '10px', marginBottom: '20px', backgroundColor: '#FEF2F2', color: '#DC2626', borderRadius: '8px', fontSize: '13px' }}>
-                            ⚠️ {loginError}
+    return (
+        <div style={{ padding: '24px', maxWidth: '520px', margin: '0 auto', fontFamily: 'sans-serif' }}>
+            {!isLoggedIn ? (
+                <div style={{ padding: '24px', borderRadius: '12px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                    <h2 style={{ color: '#1E293B', marginBottom: '16px' }}>ログイン</h2>
+                    {loginError && <p style={{ color: '#DC2626', fontSize: '14px' }}>{loginError}</p>}
+                    <form onSubmit={handleLogin}>
+                        <div style={{ marginBottom: '12px' }}>
+                            <input
+                                type="text"
+                                placeholder="ユーザー名"
+                                value={loginUser}
+                                onChange={(e) => setLoginUser(e.target.value)}
+                                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', boxSizing: 'border-box' }}
+                            />
                         </div>
-                    )}
-
-                    <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                        <input type="text" placeholder="ユーザー名 (admin)" value={loginUser} onChange={(e) => setLoginUser(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', border: '1px solid #CBD5E1' }} />
-                        <input type="password" placeholder="パスワード (1234)" value={loginPass} onChange={(e) => setLoginPass(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', border: '1px solid #CBD5E1' }} />
-                        <button type="submit" style={{ padding: '12px', background: 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>ログイン</button>
+                        <div style={{ marginBottom: '12px' }}>
+                            <input
+                                type="password"
+                                placeholder="パスワード"
+                                value={loginPass}
+                                onChange={(e) => setLoginPass(e.target.value)}
+                                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', boxSizing: 'border-box' }}
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            style={{ padding: '8px 16px', backgroundColor: '#4F46E5', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
+                        >
+                            ログイン
+                        </button>
                     </form>
                 </div>
-            </div>
-        )
-    }
-
-    // ログイン後画面
-    return (
-        <div style={{ maxWidth: '560px', margin: '30px auto', padding: '0 20px', fontFamily: 'sans-serif' }}>
-
-            {/* ヘッダー */}
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#ffffff', padding: '12px 20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', marginBottom: '20px', border: '1px solid #f0f0f0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '18px' }}>🌙</span>
-                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#334155' }}>{loginUser || 'admin'}</span>
-                </div>
-                <button onClick={handleLogout} style={{ padding: '6px 14px', backgroundColor: '#F1F5F9', color: '#475569', border: '1px solid #E2E8F0', borderRadius: '6px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>ログアウト</button>
-            </header>
-
-            {/* フォーム */}
-            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px 28px', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.05)', border: '1px solid #f0f0f0', marginBottom: '24px' }}>
-                <h1 style={{ fontSize: '18px', fontWeight: '700', color: '#1E293B', margin: '0 0 18px 0', textAlign: 'left' }}>
-                    {editingId ? '✏️ 記録を編集' : '📝 新しい睡眠を記録'}
-                </h1>
-
-                {errorMessage && (
-                    <div style={{ padding: '10px 14px', marginBottom: '16px', backgroundColor: '#FEF2F2', color: '#DC2626', borderRadius: '8px', fontSize: '13px', textAlign: 'left' }}>
-                        ⚠️ {errorMessage}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <div style={{ flex: 1, textAlign: 'left' }}>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>日付</label>
-                            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '14px', boxSizing: 'border-box' }} />
-                        </div>
-
-                        <div style={{ flex: 1, textAlign: 'left' }}>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>睡眠時間 (時間)</label>
-                            <input type="number" step="0.1" placeholder="7.5" value={hours} onChange={(e) => handleHoursChange(e.target.value)} required style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '14px', boxSizing: 'border-box' }} />
-                        </div>
-                    </div>
-
-                    {/* 入力中の不規則睡眠アラートメッセージ */}
-                    {sleepAlert && (
-                        <div style={{ padding: '10px 12px', backgroundColor: '#FFFBEB', color: '#D97706', border: '1px solid #FCD34D', borderRadius: '8px', fontSize: '12px', fontWeight: '600', textAlign: 'left' }}>
-                            {sleepAlert}
-                        </div>
-                    )}
-
-                    <div style={{ textAlign: 'left' }}>
-                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>メモ</label>
-                        <input type="text" value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="例: ぐっすり眠れた" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '14px', boxSizing: 'border-box' }} />
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
-                        <button type="submit" style={{ flex: 1, padding: '11px', background: editingId ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%)', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
-                            {editingId ? '変更を保存' : '記録を保存'}
+            ) : (
+                <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                        <h1 style={{ fontSize: '22px', color: '#0F172A', margin: 0 }}>🌙 睡眠記録アプリ</h1>
+                        <button
+                            onClick={handleLogout}
+                            style={{ padding: '6px 12px', backgroundColor: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                        >
+                            ログアウト
                         </button>
-                        {editingId && (
-                            <button type="button" onClick={resetForm} style={{ padding: '11px 16px', backgroundColor: '#94A3B8', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>キャンセル</button>
-                        )}
                     </div>
-                </form>
-            </div>
 
-            {/* 記録一覧 */}
-            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px 28px', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.05)', border: '1px solid #f0f0f0' }}>
-                <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#1E293B', margin: '0 0 16px 0', textAlign: 'left' }}>📊 過去の記録一覧</h2>
+                    {errorMessage && <p style={{ color: '#DC2626', fontSize: '13px', marginBottom: '10px' }}>{errorMessage}</p>}
 
-                {records.length === 0 ? (
-                    <p style={{ color: '#94A3B8', fontSize: '13px', margin: '15px 0' }}>まだ記録がありません。</p>
-                ) : (
+                    {/* 入力フォーム */}
+                    <form onSubmit={handleSubmit} style={{ padding: '16px', borderRadius: '12px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', marginBottom: '24px' }}>
+                        <div style={{ marginBottom: '12px' }}>
+                            <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '4px', fontWeight: '600' }}>日付</label>
+                            <input
+                                type="date"
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                                required
+                                style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #CBD5E1', boxSizing: 'border-box' }}
+                            />
+                        </div>
+                        <div style={{ marginBottom: '12px' }}>
+                            <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '4px', fontWeight: '600' }}>睡眠時間 (時間)</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                value={hours}
+                                onChange={(e) => handleHoursChange(e.target.value)}
+                                required
+                                placeholder="例: 7.5"
+                                style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #CBD5E1', boxSizing: 'border-box' }}
+                            />
+                            {sleepAlert && <p style={{ color: '#D97706', fontSize: '12px', marginTop: '4px' }}>{sleepAlert}</p>}
+                        </div>
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '4px', fontWeight: '600' }}>メモ</label>
+                            <input
+                                type="text"
+                                value={memo}
+                                onChange={(e) => setMemo(e.target.value)}
+                                placeholder="体調や目覚めの感覚など"
+                                style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #CBD5E1', boxSizing: 'border-box' }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                type="submit"
+                                style={{ flex: 1, padding: '10px', backgroundColor: '#4F46E5', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
+                            >
+                                {editingId ? '更新する' : '記録を保存'}
+                            </button>
+                            {editingId && (
+                                <button
+                                    type="button"
+                                    onClick={resetForm}
+                                    style={{ padding: '10px 14px', backgroundColor: '#E2E8F0', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                                >
+                                    キャンセル
+                                </button>
+                            )}
+                        </div>
+                    </form>
+
+                    {/* 記録一覧 */}
+                    <h2 style={{ fontSize: '16px', color: '#1E293B', marginBottom: '12px' }}>記録一覧</h2>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {records.map((item) => {
-                            const status = getSleepBadge(item.hours)
+                            const status = getStatus(item.hours)
                             return (
-                                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: '10px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                    <div style={{ textAlign: 'left' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                            <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748B' }}>{item.date}</span>
+                                <div
+                                    key={item.id}
+                                    style={{
+                                        padding: '12px 16px',
+                                        borderRadius: '10px',
+                                        border: '1px solid #E2E8F0',
+                                        backgroundColor: '#FFFFFF',
+                                        display: 'flex',
+                                        justify: 'space-between',
+                                        alignItems: 'center',
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <strong style={{ fontSize: '14px', color: '#1E293B' }}>{item.date}</strong>
                                             <span style={{ fontSize: '12px', fontWeight: '700', padding: '2px 8px', borderRadius: '12px', backgroundColor: '#EEF2FF', color: '#4F46E5' }}>
-                        {item.hours}時間
+                        {item.hours} 時間
                       </span>
-                                            {/* 不規則・睡眠不足のアラートバッジ */}
                                             <span style={{ fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '12px', backgroundColor: status.bg, color: status.color }}>
                         {status.text}
                       </span>
                                         </div>
-                                        {item.memo && (
-                                            <div style={{ fontSize: '13px', color: '#334155', fontWeight: '500' }}>
-                                                {item.memo}
-                                            </div>
-                                        )}
+                                        {item.memo && <div style={{ fontSize: '13px', color: '#334155', fontWeight: '500' }}>{item.memo}</div>}
                                     </div>
-
                                     <div style={{ display: 'flex', gap: '6px' }}>
-                                        <button onClick={() => handleEdit(item)} style={{ padding: '5px 10px', backgroundColor: '#FEF3C7', color: '#D97706', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>編集</button>
-                                        <button onClick={() => handleDelete(item.id)} style={{ padding: '5px 10px', backgroundColor: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>削除</button>
+                                        <button
+                                            onClick={() => handleEdit(item)}
+                                            style={{ padding: '5px 10px', backgroundColor: '#FEF3C7', color: '#D97706', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}
+                                        >
+                                            編集
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(item.id)}
+                                            style={{ padding: '5px 10px', backgroundColor: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}
+                                        >
+                                            削除
+                                        </button>
                                     </div>
                                 </div>
                             )
                         })}
                     </div>
-                )}
-            </div>
-
+                </div>
+            )}
         </div>
     )
 }

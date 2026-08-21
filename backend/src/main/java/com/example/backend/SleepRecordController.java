@@ -5,7 +5,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/sleep")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 public class SleepRecordController {
 
     private final SleepRecordService service;

@@ -14,7 +14,9 @@
 
 ## 本番環境 URL
 - **アプリURL**: [https://sleep-tracker-frontend-seven.vercel.app]
-- **テスト用アカウント**: 不要（直接ご利用いただけます）
+- **テスト用アカウント**
+- **ログインID**: admin
+- **パスワード**: 1234
 
 ---
 

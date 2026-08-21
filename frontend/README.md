@@ -52,3 +52,18 @@ erDiagram
         Double sleep_hours "睡眠時間"
         String memo "メモ"
     }
+```
+
+## インフラ構成図
+
+```mermaid
+graph TD
+    User[ユーザー / ブラウザ]
+    Vercel[Vercel<br/>Frontend: React]
+    Render[Render<br/>Backend: Spring Boot]
+    Neon[(Neon<br/>DB: PostgreSQL)]
+
+    User -->|① HTTPSアクセス| Vercel
+    User -->|② REST API通信| Render
+    Render -->|③ SQLクエリ| Neon
+```

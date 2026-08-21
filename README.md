@@ -65,6 +65,10 @@ graph TD
     Vercel[Vercel<br/>Frontend: React]
     Render[Render<br/>Backend: Spring Boot]
     Neon[(Neon<br/>DB: PostgreSQL)]
+
+    User -->|① HTTPSアクセス| Vercel
+    User -->|② REST API通信| Render
+    Render -->|③ SQLクエリ| Neon
 ```
 
 ## ローカル環境での起動方法
@@ -85,8 +89,4 @@ cd backend
 cd frontend
 npm install
 npm run dev
-```
-    User -->|① HTTPSアクセス| Vercel
-    User -->|② REST API通信| Render
-    Render -->|③ SQLクエリ| Neon
 ```
